@@ -4,13 +4,14 @@
 
 #define MM 1			
 #define M (MM * 2 + 1) 
-#define MAX 500	
-#define TR 500 
+#define MAX 50000000	
+#define TR 50000000
 
 typedef struct Node
 {
 	int count;			
-	int Key[M - 1];			 
+	float Key[M - 1];
+	int Id[M - 1];
 	struct Node* branch[M]; 
 } node;
 
@@ -27,77 +28,16 @@ int* insertItem(int k);	// Key 삽입 함수
 int deleteItem(int k);	// key 삭제 함수 
 node* put(node* k);	// 큐 입력 함수 
 node* get();	// 큐 출력 함수 
-int isEmpty();	// 큐 공백 체크 함수 
 void indexNodePrint(node* t);	// 인덱스 노드 출력 함수
 void indexNodePrintF(node* t);  // 인덱스 노드 파일 저장 함수
-void printEtc(node* t);		// 현재트리의 기타 정보 출력 함수  
-void printEtcF(node* t);	// 현재트리의 기타 정보 파일 저장 함수
-void insertkey();	// Key 삽입 메뉴 함수
-void findkey();		// Key 검색 메뉴 함수
-void delkey();		// Key 삭제 메뉴 함수
 void insertfile();	//B+ Tree 파일 삽입 함수 
 void printfile();	//B+ Tree 전체 정보 화일 저장 함수
 
 
 
 void main(){
-
 	insertfile();
 	printfile();
-}
-
-void insertkey(){
-	int Key;
-
-	indexNodePrint(root);
-	sequencialSearch(0);
-	scanf("%d", &Key);
-	insertItem(Key);
-	indexNodePrint(root);
-	sequencialSearch(0);
-	printf("\n\n");
-}
-
-void findkey()
-{
-	int *findadr;
-	int Key;
-
-	scanf("%d", &Key);
-	findcnt = 1;
-	findadr = search(Key);
-	if (findadr != NULL)
-	{
-		printf(" -- 검색결과 -- \n");
-		printf(" 검색 Key :  %d \n", Key);
-		printf(" 찾은 경로(인덱스 노드 높이) : %d \n", findcnt);
-		printf(" 저장된 파일의 주소 : %d \n", findadr);
-		printf(" 저장된 파일의 내용 : %d \n", *findadr);
-	}
-	else
-	{
-		printf("   -- 검색결과 -- \n");
-		printf(" 검색하시는 Key는 없습니다. \n");
-	}
-}
-
-void delkey()
-{
-	int Key;
-
-	indexNodePrint(root);
-	sequencialSearch(0);
-	scanf("%d", &Key);
-	deleteItem(Key);
-	indexNodePrint(root);
-	sequencialSearch(0);
-}
-
-void printall()
-{
-	indexNodePrint(root);
-	sequencialSearch(0);
-	printEtc(root);
 }
 
 void insertfile()
@@ -105,7 +45,7 @@ void insertfile()
 	char ch[16];
 	char c;
 
-	fp = fopen("Students.csv", "r");
+	fp = fopen("sampleData.csv", "r");
 	while (fscanf(fp, "%s", ch) == 1)
 	{
 		indexNodePrint(root);
@@ -123,7 +63,6 @@ void printfile()
 	fp = fopen("Students_score.idx", "wb");
 	indexNodePrintF(root);
 	sequencialSearchF(0);
-	printEtcF(root);
 	fclose(fp);
 }
 
@@ -133,10 +72,10 @@ int* search(int k)
 	int path;
 	if (p == NULL)
 		return NULL;
-	while (1)	// p가 leaf노드일때까지 탐색
+	while (1)
 	{
 		int j;
-		for (j = 0; j<p->count%M; j++)	// 한 노드에서 경로를 결정
+		for (j = 0; j<p->count%M; j++)
 		{
 			if (p->Key[j] >= k)
 			{
@@ -247,7 +186,7 @@ void sequencialSearchF(int k)
 
 int* insertItem(int k)
 {
-	node* trace[TR];	// 삽입될 경로를 저장할 스택용도의 배열
+	node* trace[TR];
 	int dir[TR];
 	int Key, i;
 
@@ -260,12 +199,6 @@ int* insertItem(int k)
 	p = root;	// p를 가지고 삽입될 위치를 탐색
 
 	*(int*)upRight = k;
-
-	if (k <= 0)
-	{
-		printf("\n 양수만 Key로써 입력할 수 있습니다. \n");
-		return NULL;
-	}
 
 	if (root == NULL)
 	{
@@ -281,14 +214,14 @@ int* insertItem(int k)
 	{
 		int j;
 		trace[i] = p;
-		for (j = 0; j<p->count%M; j++)	// 한 노드에서 경로를 결정
+		for (j = 0; j < p->count % M; j++)	// 한 노드에서 경로를 결정
 			if (p->Key[j] >= k)
 			{
 				dir[i] = j;
 				break;
 			}
 		if (j == p->count%M)
-			dir[i] = p->count%M;
+			dir[i] = p->count % M;
 		if (p->count / M == 1)
 			break;
 		p = p->branch[j];
@@ -298,7 +231,6 @@ int* insertItem(int k)
 	if (p->Key[dir[i]] == k)	// 같은 Key가 이미 트리에 존재. 
 	{
 		free(upRight);
-		printf("   ### 이미 입력하신 Key가 있습니다. ###\n");
 		return NULL;
 	}
 
@@ -311,7 +243,7 @@ int* insertItem(int k)
 		if (p->count%M != M - 1)	// 삽입해도 overflow가 생기지 않으면
 		{
 			int m;
-			for (m = p->count%M; m>path; m--)	// 삽입될 칸부터 끝까지 한칸씩 뒤로. 
+			for (m = p->count % M; m > path; m--)	// 삽입될 칸부터 끝까지 한칸씩 뒤로. 
 			{
 				p->Key[m] = p->Key[m - 1];
 				p->branch[m + 1] = p->branch[m];
@@ -421,7 +353,6 @@ int deleteItem(int k)
 	path = dir[i];
 	if (p->Key[path] != k)
 	{
-		printf("   ### 삭제하려는 Key는 없습니다.  ###\n");
 		return 0;
 	}
 	free(p->branch[path + 1]);
@@ -623,17 +554,11 @@ node* get()
 	node* i;
 	if (front == rear)
 	{
-		printf("\n Queue underflow.");
 		return NULL;
 	}
 	i = queue[front];
 	front = ++front % MAX;
 	return i;
-}
-
-int isEmpty()
-{
-	return (front == rear);
 }
 
 void indexNodePrint(node* t)
@@ -645,7 +570,7 @@ void indexNodePrint(node* t)
 	else
 	{
 		put(t);
-		while (!isEmpty())
+		while (!(front == rear))
 		{
 			int i;
 			t = get();
@@ -671,7 +596,7 @@ void indexNodePrintF(node* t)
 	else
 	{
 		put(t);
-		while (!isEmpty())
+		while (!(front == rear))
 		{
 			int i;
 			t = get();
@@ -688,36 +613,5 @@ void indexNodePrintF(node* t)
 	}
 }
 
-void printEtc(node* t)
-{
-	int x;
-	int* y;
-
-	for (x = 0; x < (MAX * 10); x++)
-	{
-		y = search(x);
-		if (y != NULL)
-		{
-			printf(" Key가 %d인 파일의 주소는 %d이고 저장된 내용은 %d입니다. \n", x, y, *y);
-
-		}
-	}
-}
-
-void printEtcF(node* t)
-{
-	int x;
-	int* y;
-
-	for (x = 0; x < (MAX * 10); x++)
-	{
-		y = search(x);
-		if (y != NULL)
-		{
-			fprintf(fp, " Key가 %d인 파일의 주소는 %d이고 저장된 내용은 %d입니다. \n", x, y, *y);
-
-		}
-	}
-}
 
 
