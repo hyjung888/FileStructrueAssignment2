@@ -1,0 +1,5 @@
+﻿  main.cpp
+c:\users\jcy\desktop\hw\filestructrue\assignment2\filestructrueassignment2\assignment2\assignment2\format.h(191): warning C4101: 'score' :참조되지 않은 지역 변수입니다.
+c:\users\jcy\desktop\hw\filestructrue\assignment2\filestructrueassignment2\assignment2\assignment2\format.h(193): warning C4101: 'name' :참조되지 않은 지역 변수입니다.
+  Assignment2.vcxproj -> C:\Users\JCY\Desktop\HW\fileStructrue\Assignment2\FileStructrueAssignment2\Assignment2\Debug\Assignment2.exe
+  Assignment2.vcxproj -> C:\Users\JCY\Desktop\HW\fileStructrue\Assignment2\FileStructrueAssignment2\Assignment2\Debug\Assignment2.pdb (Full PDB)
