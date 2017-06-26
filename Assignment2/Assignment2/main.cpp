@@ -1,76 +1,83 @@
-#define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
 #include <fstream>
 #include <string>
 #include "format.h"
 #include "indexing.h"
+#include "input.h"
 using namespace std;
 
 
-
+HashTable* hTable_stud;
+HashTable* hTable_prof;
 int main() {
 
 
-	fstream inputData("sampleData.csv",ios::in);
-	
-	if (!inputData.is_open()) {
-		cout << "read sampleData.csv error" << endl;
-	}
-	string tmpStr;
-	int N;
-	inputData >> N;
-	getline(inputData, tmpStr);
-
-	
-	int tableSize = 4;
-	//생성
-	struct HashTable* hTable = CreateHashTable(tableSize);
-	//삽입
-
-	struct Students *tmpStudent = new Students();
-
-	for(int i=0;i<N;i++) {
-		getline(inputData, tmpStr);
-		string tmpName=tmpStr.substr(0, tmpStr.find(',', 0));
-		strncpy(tmpStudent->name, tmpName.c_str(), tmpName.size());
-		tmpStr = tmpStr.substr(tmpName.size()+1);
-
-		string tmpID= tmpStr.substr(0, tmpStr.find(',', 0));
-		tmpStudent->StudentID = stoi(tmpID);
-		tmpStr = tmpStr.substr(tmpID.size() + 1);
-
-		string tmpScore= tmpStr.substr(0, tmpStr.find(',', 0));
-		tmpStudent->score = stof(tmpScore);
-		tmpStr = tmpStr.substr(tmpScore.size() + 1);
-
-		string tmpADid = tmpStr;
-		tmpStudent->advisorID = stoi(tmpADid);
-
-
-		hTable=HashInsert(hTable, tmpStudent->StudentID);
-		memset(tmpStudent->name, 0, 20);
-		tableSize = hTable->size;
-	}
-	inputData.close();
-	cout << "파일에 쓰기 시작" << endl;
-	inputData.open("sampleData.csv", ios::in);
-	inputData >> N;
-	getline(inputData, tmpStr);
-
-	struct BlockTable *bTable = CreateBlockTable(tableSize);
-
-	insertAllBlock(inputData, N, bTable);
-	
-	fstream DB;
-	saveFile(DB, bTable);
+	fstream inputData;
 
 	fstream hash;
-	saveHashTable(hTable, hash);
+	fstream DB;
 
-	HashTable* hT = NULL;
+	int N;
 
-	hT=loadHashFile(hash, hT);
+	string tmpStr;
+	int tableSize_stud = 4096;
+	int tableSize_prof = 128;
+	int input;
+	cout << "1을 누르면 새로운 학생DB를 입력받습니다" << endl;
+	cout << "2을 누르면 새로운 교수DB를 입력받습니다" << endl;
+	cout << "0을 누르면 기존 DB를 사용합니다." << endl;
+	cin >> input;
+	if (input == 1) {
+		inputData.open("student_data.csv", ios::in);
+		inputData >> N;
+		getline(inputData, tmpStr);
+		//생성
+		hTable_stud = CreateHashTable(tableSize_stud, hash, DB);
+		//삽입
+		inputStudent(hTable_stud, inputData, hash, DB, N, tableSize_stud);
+		inputData.close();
 
-	printHashTable(hT);
-	return 1;
+	}
+	else if (input == 2) {
+		inputData.open("prof_data.csv", ios::in);
+		inputData >> N;
+		getline(inputData, tmpStr);
+		//생성
+		hTable_prof = CreateHashTable(tableSize_prof, hash, DB);
+		//삽입
+		inputProf(hTable_prof, inputData, hash, DB, N, tableSize_stud);
+		inputData.close();
+
+	}
+
+	cout << "쿼리를 입력시작" << endl;
+
+	inputData.open("query.dat", ios::in);
+	inputData >> N;
+	getline(inputData, tmpStr);
+	for (int i = 0; i < N; i++) {
+		//parsing student
+		getline(inputData, tmpStr);
+		string tmpType = tmpStr.substr(0, tmpStr.find(',', 0));
+		tmpStr = tmpStr.substr(tmpType.size() + 2);
+		string tableName = tmpStr.substr(0, tmpStr.find(',', 0));
+		tmpStr = tmpStr.substr(tableName.size() + 2);
+
+		string attributeName = tmpStr.substr(0, tmpStr.find(',', 0));
+		tmpStr = tmpStr.substr(attributeName.size() + 2);
+		string min, max;
+		if (tmpType == "Search-Exact") {
+			min = tmpStr.substr(0, tmpStr.find(',', 0));
+
+			queryExactProcessing(tableName, attributeName,min);
+		}
+		else if (tmpType == "Search-Range") {
+			min = tmpStr.substr(0, tmpStr.find(',', 0));
+			tmpStr = tmpStr.substr(min.size() + 1);
+			max = tmpStr.substr(0, tmpStr.find(',', 0));
+		}
+
+
+		return 1;
+	}
 }
