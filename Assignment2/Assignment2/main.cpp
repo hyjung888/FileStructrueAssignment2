@@ -16,12 +16,13 @@ int main() {
 
 	fstream hash;
 	fstream DB;
-
+	fstream queryAns(QUERY_ANS_FILENAME, ios::out);
+	queryAns.close();
 	int N;
 
 	string tmpStr;
-	int tableSize_stud = 4096;
-	int tableSize_prof = 128;
+	int tableSize_stud = 4;
+	int tableSize_prof = 4;
 	int input;
 	cout << "1을 누르면 새로운 학생DB를 입력받습니다" << endl;
 	cout << "2을 누르면 새로운 교수DB를 입력받습니다" << endl;
@@ -58,8 +59,14 @@ int main() {
 	for (int i = 0; i < N; i++) {
 		//parsing student
 		getline(inputData, tmpStr);
+		fstream ans(QUERY_ANS_FILENAME, ios::app);
+		ans << tmpStr << endl;
 		string tmpType = tmpStr.substr(0, tmpStr.find(',', 0));
 		tmpStr = tmpStr.substr(tmpType.size() + 2);
+		if (tmpType == "Join") {
+			queryJoinProcessing();
+			continue;
+		}
 		string tableName = tmpStr.substr(0, tmpStr.find(',', 0));
 		tmpStr = tmpStr.substr(tableName.size() + 2);
 
@@ -78,6 +85,8 @@ int main() {
 		}
 
 
-		return 1;
+
 	}
+	return 1;
+
 }

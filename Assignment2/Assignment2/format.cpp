@@ -101,9 +101,9 @@ void insertAllBlock(fstream& inputData, int N, struct BlockTable* bTable) {
 	}
 }
 
-void storeStudent(fstream& DB, Students* stud, int blockNum, int idx,char* fileName) {
+void storeStudent(fstream& DB, Students* stud, int blockNum, int idx, char* fileName) {
 	DB.open(fileName, ios::in | ios::out | ios::binary);
-	long pos = 16 + (BLOCK_LOAD_FACTOR + 1)*blockNum*sizeof(Students) + 16 + idx *sizeof(Students);
+	long pos = 16 + (BLOCK_LOAD_FACTOR + 1)*blockNum * sizeof(Students) + 16 + idx * sizeof(Students);
 	DB.seekp(pos);
 	char studs[32];
 	memcpy(studs, reinterpret_cast<char*>(stud), 32);
@@ -113,7 +113,7 @@ void storeStudent(fstream& DB, Students* stud, int blockNum, int idx,char* fileN
 
 void storeProf(fstream& DB, Prof* prof, int blockNum, int idx, char* fileName) {
 	DB.open(fileName, ios::in | ios::out | ios::binary);
-	long pos = 16 + (BLOCK_LOAD_FACTOR + 1)*blockNum*sizeof(Prof) + 16 + idx *sizeof(Prof);
+	long pos = 16 + (BLOCK_LOAD_FACTOR + 1)*blockNum * sizeof(Prof) + 16 + idx * sizeof(Prof);
 	DB.seekp(pos);
 	char profs[28];
 	memcpy(profs, reinterpret_cast<char*>(prof), 28);
@@ -122,7 +122,7 @@ void storeProf(fstream& DB, Prof* prof, int blockNum, int idx, char* fileName) {
 }
 
 
-void storeBlock(fstream& DB, Block* block, int blockNum,char* fileName) {
+void storeBlock(fstream& DB, Block* block, int blockNum, char* fileName) {
 	DB.open(fileName, ios::out | ios::binary);
 	long pos = 16 + (BLOCK_LOAD_FACTOR + 1)*blockNum + 16;
 	DB.seekp(pos);
@@ -134,7 +134,7 @@ void storeBlock(fstream& DB, Block* block, int blockNum,char* fileName) {
 	DB.close();
 	for (int i = 0; i < block->cnt; i++) {
 		tmpStud = &block->stud[i];
-		storeStudent(DB, tmpStud, blockNum, i,fileName);
+		storeStudent(DB, tmpStud, blockNum, i, fileName);
 	}
 	for (int i = block->cnt; i <= BLOCK_LOAD_FACTOR; i++) {
 		for (int i = 0; i < 32; i++)
@@ -145,7 +145,7 @@ void storeBlock(fstream& DB, Block* block, int blockNum,char* fileName) {
 	DB.close();
 }
 
-void saveFile(fstream& DB, struct BlockTable* bTable,char* fileName) {
+void saveFile(fstream& DB, struct BlockTable* bTable, char* fileName) {
 
 	DB.open(fileName, ios::out | ios::binary | ios::trunc);
 	DB.write(reinterpret_cast<const char*>(&bTable->size), sizeof(int));
@@ -159,9 +159,9 @@ void saveFile(fstream& DB, struct BlockTable* bTable,char* fileName) {
 	}
 }
 
-Block* loadBlockStud(fstream& DB, int blockNum,char* fileName) {
-	DB.open(fileName, ios::in |ios::out| ios::binary);
-	long pos = 16 + (BLOCK_LOAD_FACTOR + 1)*blockNum*sizeof(Students);
+Block* loadBlockStud(fstream& DB, int blockNum, char* fileName, bool isDelete = true) {
+	DB.open(fileName, ios::in | ios::out | ios::binary);
+	long pos = 16 + (BLOCK_LOAD_FACTOR + 1)*blockNum * sizeof(Students);
 	DB.seekg(pos);
 	char tmpNum[4];
 	char tmpChar[32];
@@ -183,23 +183,24 @@ Block* loadBlockStud(fstream& DB, int blockNum,char* fileName) {
 		memcpy(tmpNum, tmpChar + 24, 4);
 		tmpStudent->score = BinaryToFloat(tmpNum);
 		tmpStudent->advisorID = BinaryToInt(tmpChar + 28);
-		memcpy(&blk->stud[j],tmpStudent,sizeof(Students));
+		memcpy(&blk->stud[j], tmpStudent, sizeof(Students));
 	}
 	for (int j = cnt; j <= BLOCK_LOAD_FACTOR; j++)
 		DB.read(tmpChar, 32);
 
 	delete tmpStudent;
 	memset(tmpChar, 0, sizeof(tmpChar));
-	DB.seekp(pos);
-	for (int i = 0; i <= BLOCK_LOAD_FACTOR; i++)
-		DB.write(tmpChar,32);
-
+	if (isDelete) {
+		DB.seekp(pos);
+		for (int i = 0; i <= BLOCK_LOAD_FACTOR; i++)
+			DB.write(tmpChar, 32);
+	}
 	DB.close();
 	return blk;
 }
-ProfBlock* loadBlockProf(fstream& DB, int blockNum, char* fileName) {
+ProfBlock* loadBlockProf(fstream& DB, int blockNum, char* fileName, bool isDelete = true) {
 	DB.open(fileName, ios::in | ios::out | ios::binary);
-	long pos = 16 + (BLOCK_LOAD_FACTOR + 1)*blockNum*sizeof(Prof);
+	long pos = 16 + (BLOCK_LOAD_FACTOR + 1)*blockNum * sizeof(Prof);
 	DB.seekg(pos);
 	char tmpNum[4];
 	char tmpChar[32];
@@ -227,10 +228,11 @@ ProfBlock* loadBlockProf(fstream& DB, int blockNum, char* fileName) {
 
 	delete tmpProf;
 	memset(tmpChar, 0, sizeof(tmpChar));
-	DB.seekp(pos);
-	for (int i = 0; i <= BLOCK_LOAD_FACTOR; i++)
-		DB.write(tmpChar, sizeof(Prof));
-
+	if (isDelete) {
+		DB.seekp(pos);
+		for (int i = 0; i <= BLOCK_LOAD_FACTOR; i++)
+			DB.write(tmpChar, sizeof(Prof));
+	}
 	DB.close();
 	return blk;
 }
@@ -248,11 +250,11 @@ void queryExactProcessing(string tableName, string attribute, string val) {
 	char tmpChar[32];
 	DB.read(tmpChar, 16);
 	int size = BinaryToInt(tmpChar);
-	int key = GetKey(stoi(val),size);
+	int key = GetKey(stoi(val), size);
 	DB.close();
 
-	if (tableName == "Professors") {
-		ProfBlock*tmpBlock=loadBlockProf(DB, key, DB_PROF_FILENAME);
+	if (tableName == "Professors" && attribute == "ProfID") {
+		ProfBlock*tmpBlock = loadBlockProf(DB, key, DB_PROF_FILENAME);
 		for (int i = 0; i < tmpBlock->cnt; i++)
 		{
 			Prof tmpProf = tmpBlock->profs[i];
@@ -263,13 +265,13 @@ void queryExactProcessing(string tableName, string attribute, string val) {
 
 		}
 	}
-	else {
-		Block*tmpBlock = loadBlockStud(DB,key,DB_STUDENT_FILENAME);
+	else if (tableName == "Students"&& attribute == "StudentID") {
+		Block*tmpBlock = loadBlockStud(DB, key, DB_STUDENT_FILENAME);
 		for (int i = 0; i < tmpBlock->cnt; i++)
 		{
 			Students tmpStud = tmpBlock->stud[i];
 			if (tmpStud.StudentID == stoi(val)) {
-				ans << tmpStud.name << ", " << tmpStud.StudentID << ", " << tmpStud.score<<", "<<tmpStud.advisorID << endl;
+				ans << tmpStud.name << ", " << tmpStud.StudentID << ", " << tmpStud.score << ", " << tmpStud.advisorID << endl;
 				break;
 			}
 
@@ -277,4 +279,44 @@ void queryExactProcessing(string tableName, string attribute, string val) {
 	}
 
 	ans.close();
+}
+
+
+void queryJoinProcessing() {
+	fstream profDB(DB_PROF_FILENAME, ios::in | ios::out | ios::binary);
+	fstream studDB(DB_STUDENT_FILENAME, ios::in | ios::out | ios::binary);
+	fstream ans(QUERY_ANS_FILENAME, ios::app);
+	char tmpChar[32];
+	profDB.read(tmpChar, 16);
+	int profSize = BinaryToInt(tmpChar);
+	studDB.read(tmpChar, 16);
+	int studSize = BinaryToInt(tmpChar);
+	profDB.close();
+	studDB.close();
+	Block*tmpBlock;
+	ProfBlock*tmpProfBlock;
+	for (int i = 0; i < studSize; i++) {
+		tmpBlock = loadBlockStud(studDB, i, DB_STUDENT_FILENAME, false);
+		for (int j = 0; j < profSize; j++) {
+			tmpProfBlock = loadBlockProf(profDB, j, DB_PROF_FILENAME, false);
+			for (int ii = 0; ii < tmpBlock->cnt; ii++) {
+				Students tmpStud = tmpBlock->stud[ii];
+				for (int jj = 0; jj < tmpProfBlock->cnt; jj++) {
+					Prof tmpProf = tmpProfBlock->profs[jj];
+					if (tmpStud.advisorID == tmpProf.ProfID) {
+						ans << tmpStud.name << ", " << tmpStud.StudentID << ", " << tmpStud.score << ", ";
+						ans << tmpProf.name << ", " << tmpProf.ProfID << ", " << tmpProf.Salary << endl;
+						break;
+					}
+				}
+
+			}
+			delete tmpProfBlock;
+		}
+		delete tmpBlock;
+	}
+	profDB.close();
+	studDB.close();
+	ans.close();
+
 }

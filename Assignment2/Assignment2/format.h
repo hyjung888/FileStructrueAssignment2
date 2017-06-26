@@ -28,7 +28,8 @@ void storeStudent(fstream& DB, Students* stud, int blockNum, int idx,char* fileN
 void storeProf(fstream& DB, Prof* prof, int blockNum, int idx, char* fileName);
 
 
-Block* loadBlockStud(fstream& DB,int blockNum, char*fileName);
-ProfBlock* loadBlockProf(fstream& DB, int blockNum, char*fileName);
+Block* loadBlockStud(fstream& DB, int blockNum, char*fileName, bool flag = true);
+ProfBlock* loadBlockProf(fstream& DB, int blockNum, char*fileName, bool flag = true);
 
 void queryExactProcessing(string tableName, string attribute, string val);
+void queryJoinProcessing();
